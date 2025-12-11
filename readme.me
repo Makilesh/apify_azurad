@@ -1,0 +1,189 @@
+# Muraena.ai Scraper
+
+A Python script to extract company data (email IDs, phone numbers, company names, and roles) from app.muraena.ai using Apify's Playwright Scraper.
+
+## Features
+
+- ✅ Automated login to Muraena.ai
+- ✅ Scrapes company search results
+- ✅ Extracts: Company Name, Website, Industry, Location, Headcount, Email, Phone, Role
+- ✅ Clicks "Reveal" buttons to uncover hidden contact information
+- ✅ Saves results to JSON file
+- ✅ Downloads debug screenshots
+- ✅ Secure credential management using .env file
+
+## Prerequisites
+
+- Python 3.7 or higher
+- Apify account (free tier available)
+- Muraena.ai account with valid credentials
+
+## Installation
+
+1. **Clone or download this repository**
+
+2. **Install required Python packages:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Create a `.env` file** (copy from `.env.example`):
+   ```bash
+   cp .env.example .env
+   ```
+
+4. **Configure your credentials** in the `.env` file:
+   ```dotenv
+   # Get your Apify API token from: https://console.apify.com/account/integrations
+   APIFY_API_TOKEN=apify_api_YOUR_TOKEN_HERE
+   
+   # Your Muraena.ai login credentials
+   MURAENA_EMAIL=your_email@example.com
+   MURAENA_PASSWORD=your_password_here
+   
+   # Target URL for scraping (optional - modify as needed)
+   TARGET_URL=https://app.muraena.ai/companies_search/results?company_countries[]=United%20States&industries[]=Commercial%20Real%20Estate&page=7&size=100
+   ```
+
+## Configuration
+
+### Getting Your Apify API Token
+
+1. Sign up at [Apify](https://apify.com/)
+2. Go to [Account Integrations](https://console.apify.com/account/integrations)
+3. Copy your API token
+4. Paste it in your `.env` file
+
+### Customizing the Target URL
+
+You can modify the `TARGET_URL` in your `.env` file to scrape different search results. The URL parameters include:
+
+- `company_countries[]` - Filter by country
+- `industries[]` - Filter by industry
+- `page` - Page number
+- `size` - Results per page (max 100)
+
+## Usage
+
+Run the scraper:
+
+```bash
+python muraena_scraper.py
+```
+
+The script will:
+1. Load credentials from `.env` file
+2. Initialize Apify client
+3. Start the Playwright scraper
+4. Login to Muraena.ai
+5. Navigate to search results
+6. Click reveal buttons to uncover contact info
+7. Extract data from the table
+8. Save results to `muraena_results.json`
+
+## Output
+
+### JSON Results File
+
+Results are saved to `muraena_results.json` with the following structure:
+
+```json
+[
+  {
+    "success": true,
+    "results": [
+      {
+        "rowNumber": 1,
+        "companyName": "Company Name Inc.",
+        "website": "https://example.com",
+        "industry": "Commercial Real Estate",
+        "location": "New York, NY",
+        "headcount": "50-100",
+        "email": "contact@example.com",
+        "phone": "+1-555-0100",
+        "role": "CEO"
+      }
+    ],
+    "pageUrl": "https://app.muraena.ai/companies_search/results...",
+    "totalRecords": 100,
+    "scrapedAt": "2025-12-11T10:30:00.000Z"
+  }
+]
+```
+
+### Screenshots
+
+Debug screenshots are saved to the Apify run storage:
+- `step1_email_filled.png` - After entering email
+- `step2_after_continue.png` - After clicking continue
+- `step3_before_submit.png` - Before final login submission
+- `step4_after_login.png` - After successful login
+- `step5_search_results.png` - Search results page
+- `error_screenshot.png` - If an error occurs
+
+To download screenshots, uncomment the lines at the bottom of the script.
+
+## Troubleshooting
+
+### Error: "APIFY_API_TOKEN not found in .env file"
+- Make sure you created a `.env` file (not `.env.example`)
+- Ensure the file contains valid credentials
+
+### Login fails
+- Verify your Muraena.ai credentials are correct
+- Check if Muraena.ai has changed their login flow
+- Review screenshots in Apify console
+
+### No data extracted
+- Check if the table structure on Muraena.ai has changed
+- Review the `step5_search_results.png` screenshot
+- Verify the TARGET_URL is correct
+
+### Rate limiting
+- Apify free tier has usage limits
+- Consider adding delays between requests
+- Upgrade your Apify plan if needed
+
+## Security Notes
+
+⚠️ **Important Security Practices:**
+
+- **Never commit your `.env` file to Git** (it's already in `.gitignore`)
+- Keep your API tokens and credentials secret
+- Use environment variables for all sensitive data
+- Rotate your credentials regularly
+- Review Apify's security best practices
+
+## Monitoring
+
+You can monitor your scraper runs in the Apify Console:
+- View run status and logs
+- Download screenshots
+- Check usage and billing
+- Review extracted data
+
+Each run provides a direct link: `https://console.apify.com/actors/runs/{run_id}`
+
+## Rate Limits & Costs
+
+- **Apify Free Tier:** Limited compute units per month
+- **Residential Proxy:** Uses proxy credits (check Apify pricing)
+- Monitor your usage in Apify Console
+
+## Support
+
+For issues related to:
+- **Apify:** [Apify Documentation](https://docs.apify.com/)
+- **Muraena.ai:** Contact their support team
+- **This Script:** Check logs and screenshots, review error messages
+
+## License
+
+This script is provided as-is for educational and legitimate business purposes. Ensure you comply with:
+- Muraena.ai's Terms of Service
+- Apify's Terms of Service
+- Applicable data protection laws (GDPR, CCPA, etc.)
+
+## Disclaimer
+
+Use this scraper responsibly and ethically. Ensure you have the right to access and scrape the data. The authors are not responsible for misuse of this tool.

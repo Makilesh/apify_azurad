@@ -20,35 +20,60 @@ if not TARGET_URL:
 # Initialize the ApifyClient
 client = ApifyClient(APIFY_API_TOKEN)
 
-# IMPORTANT: Replace these with your actual cookies after manual login
-# See instructions below on how to get these
-COOKIES =[
-  {
-    "name": "_hjSessionUser_5015060",
-    "value": "eyJpZCI6IjJlMzFhZTA3LTRjYTQtNWI1ZS04MDUzLWYxMzVhMjlhNjRiMyIsImNyZWF0ZWQiOjE3NjU0NTgyNzY0NDIsImV4aXN0aW5nIjp0cnVlfQ==",
-    "domain": ".muraena.ai",
-    "path": "/",
-    "httpOnly": false,
-    "secure": true
-  },
-  {
-    "name": "_hjSession_5015060",
-    "value": "eyJpZCI6IjRiOWJjNjQ5LTA3ZmYtNDExZi1hODQ1LWI0ZDBlOWI2NDI1YSIsImMiOjE3NjU0NTgyNzY0NDMsInMiOjEsInIiOjEsInNiIjowLCJzciI6MCwic2UiOjAsImZzIjoxLCJzcCI6MH0=",
-    "domain": ".muraena.ai",
-    "path": "/",
-    "httpOnly": false,
-    "secure": true
-  },
-  {
-    "name": "intercom-session-c4ozkspm",
-    "value": "Qzc2YjVKZ3ZIdDJPbm1xUTBhcXlFeS9XN3ppU0JyS3F4cXNsNmJCVXZhMDJpRGxmVDNGLzhpWENPakx0Q1lVV0xVVHJGcnRqREdOTWNzQmFicFBUVzVnMEErMDJOQUN0aXltZGRtU1o5dFE9LS0wWDRuWDgyM0hidU5NNlk0NHdKYnFRPT0=--8ea8388ddca0102d7d9eee75bc19ffc85becf638",
-    "domain": ".muraena.ai",
-    "path": "/",
-    "httpOnly": false,
-    "secure": false
-  }
-
+# Cookies extracted from EditThisCookie - ALL cookies included
+COOKIES = [
+    {
+        "name": "_ga",
+        "value": "GA1.1.1825635158.1765359081",
+        "domain": ".muraena.ai",
+        "path": "/",
+        "httpOnly": False,
+        "secure": False
+    },
+    {
+        "name": "_ga_8GNJYRECKW",
+        "value": "GS2.1.s1765454279$o7$g0$t1765454279$j60$l0$h0",
+        "domain": ".muraena.ai",
+        "path": "/",
+        "httpOnly": False,
+        "secure": False
+    },
+    {
+        "name": "_hjSessionUser_5015060",
+        "value": "eyJpZCI6IjZiNGQzYjcwLWM4ODUtNTg4ZC1iMjM3LTczYTNlZWJkYzNkOSIsImNyZWF0ZWQiOjE3NjUzNTkwODE1MDcsImV4aXN0aW5nIjp0cnVlfQ==",
+        "domain": ".muraena.ai",
+        "path": "/",
+        "httpOnly": False,
+        "secure": True
+    },
+    {
+        "name": "intercom-device-id-c4ozkspm",
+        "value": "19096051-f3e5-48ab-a8ae-a9e06266cdb8",
+        "domain": ".muraena.ai",
+        "path": "/",
+        "httpOnly": False,
+        "secure": False
+    },
+    {
+        "name": "intercom-session-c4ozkspm",
+        "value": "QXpLeFAwVGkzQVRCemk4QnlDc2tqS2thVFlwZHNjcW92QlFqT1IxcHVJakt1d2Jkc1F0RUx6UXFCSi9ac0NBZkZkOEVGL2NPbkNXQkw3SHIyRjVZckdyK0RITTJmNU9kMDBGc1Z5Vlc5YUk9LS12dXdtY1NHUStRbi8zODNBM2s1SE53PT0=--f623796c596d81e6acb77815b3bf1c54d09cb90c",
+        "domain": ".muraena.ai",
+        "path": "/",
+        "httpOnly": False,
+        "secure": False
+    },
+    {
+        "name": "mp_60a0f9774410aabfa2052f1f7e20abd9_mixpanel",
+        "value": "%7B%22distinct_id%22%3A%20%2231552%22%2C%22%24device_id%22%3A%20%2219b0799d661633-0703e8cdbfaad8-26011a51-144000-19b0799d662c00%22%2C%22%24initial_referrer%22%3A%20%22%24direct%22%2C%22%24initial_referring_domain%22%3A%20%22%24direct%22%2C%22%24user_id%22%3A%20%2231552%22%7D",
+        "domain": ".muraena.ai",
+        "path": "/",
+        "httpOnly": False,
+        "secure": False
+    }
 ]
+
+# NOTE: You may need to add localStorage data if cookies alone don't work
+# Check browser console for: localStorage.getItem('token') or similar
 
 # Configuration for Playwright Scraper
 run_input = {
@@ -77,7 +102,7 @@ run_input = {
     try {{
         log.info('=== STARTING DATA EXTRACTION ===');
         
-        // Add cookies if they were set in preNavigationHooks
+        // Wait for page to load
         log.info('Waiting for page to load...');
         await page.waitForLoadState('networkidle', {{ timeout: 15000 }});
         await page.waitForTimeout(3000);
@@ -88,8 +113,14 @@ run_input = {
         // Check if we're logged in (not on login page)
         if (currentUrl.includes('login') || currentUrl.includes('signin')) {{
             log.error('❌ Not logged in - redirected to login page');
-            log.error('Your session cookies may have expired. Please update them.');
-            throw new Error('Not authenticated - session expired');
+            log.error('The cookies may not be sufficient. You may need localStorage tokens.');
+            
+            // Try to check what's missing
+            const cookies = await page.context().cookies();
+            log.info(`Cookies present: ${{cookies.length}}`);
+            
+            await page.screenshot({{ path: 'not_authenticated.png', fullPage: true }});
+            throw new Error('Not authenticated - session expired or localStorage needed');
         }}
         
         log.info('✅ Successfully authenticated!');
@@ -121,6 +152,11 @@ run_input = {
         if (!rowsSelector) {{
             log.error('❌ No table found');
             await page.screenshot({{ path: 'no_table_error.png', fullPage: true }});
+            
+            // Log page content for debugging
+            const bodyText = await page.evaluate(() => document.body.innerText);
+            log.info(`Page content preview: ${{bodyText.substring(0, 500)}}`);
+            
             throw new Error('No results table found');
         }}
         
@@ -158,7 +194,6 @@ run_input = {
                 // Extract text content from cells
                 const getCellText = (cell) => {{
                     if (!cell) return '';
-                    // Try to get link href if present
                     const link = cell.querySelector('a');
                     const button = cell.querySelector('button');
                     
@@ -182,8 +217,7 @@ run_input = {
                     phone: getCellText(cells[6]),
                     role: getCellText(cells[7]),
                     additionalData: getCellText(cells[8]),
-                    cellCount: cells.length,
-                    rawHTML: row.innerHTML
+                    cellCount: cells.length
                 }};
             }}).filter(item => item !== null);
         }});
@@ -222,13 +256,9 @@ run_input = {
         // Add authentication cookies
         const cookies = {json.dumps(COOKIES)};
         
-        if (cookies && cookies.length > 0 && cookies[0].value !== 'your_session_cookie_value') {{
-            log.info('Adding authentication cookies...');
-            await page.context().addCookies(cookies);
-            log.info('✓ Cookies added');
-        }} else {{
-            log.warn('⚠️ No valid cookies configured - login may be required');
-        }}
+        log.info('Adding cookies...');
+        await page.context().addCookies(cookies);
+        log.info(`✓ Added ${{cookies.length}} cookies`);
         
         log.info('✓ Pre-navigation setup completed');
     }}
@@ -257,47 +287,17 @@ run_input = {
 
 
 def run_scraper():
-    """Run the Muraena.ai scraper with session cookies"""
-    print("🚀 Starting Muraena.ai scraper (Cookie-based authentication)...")
+    """Run the Muraena.ai scraper with actual cookies from logged-in session"""
+    print("🚀 Starting Muraena.ai scraper with your cookies...")
     print(f"📍 Target URL: {TARGET_URL[:80]}...")
-    
-    # Check if cookies are configured
-    if COOKIES[0]['value'] == 'your_session_cookie_value':
-        print("\n⚠️  WARNING: Cookies not configured!")
-        print("=" * 60)
-        print("Please follow these steps to get your session cookies:")
-        print()
-        print("1. Open Chrome/Firefox and go to https://app.muraena.ai")
-        print("2. Login manually (check your email for magic link)")
-        print("3. Once logged in, open Developer Tools (F12)")
-        print("4. Go to 'Application' tab (Chrome) or 'Storage' tab (Firefox)")
-        print("5. Click 'Cookies' → 'https://app.muraena.ai'")
-        print("6. Look for session/auth cookies (usually named like:")
-        print("   - 'session', 'auth_token', 'access_token', etc.")
-        print("7. Copy the Name, Value, Domain, Path for each cookie")
-        print("8. Update the COOKIES list in this script")
-        print()
-        print("Example:")
-        print('COOKIES = [')
-        print('    {')
-        print('        "name": "session",')
-        print('        "value": "abc123def456...",')
-        print('        "domain": ".muraena.ai",')
-        print('        "path": "/",')
-        print('        "httpOnly": True,')
-        print('        "secure": True')
-        print('    }')
-        print(']')
-        print("=" * 60)
-        
-        response = input("\nDo you want to continue anyway? (y/n): ")
-        if response.lower() != 'y':
-            print("Exiting...")
-            return None
+    print()
+    print("📝 Note: Your cookies include user_id: 31552 (you ARE logged in!)")
+    print("   If this fails, we may need localStorage/sessionStorage tokens too.")
+    print()
     
     try:
         # Run the Actor
-        print("\n📤 Sending scraper configuration to Apify...")
+        print("📤 Sending scraper configuration to Apify...")
         run = client.actor("apify/playwright-scraper").call(run_input=run_input)
         
         print(f"✅ Actor run started: {run['id']}")
@@ -380,9 +380,12 @@ def run_scraper():
                 f.write(log_content)
             
             print(f"📝 Error log saved to: {log_file}")
-            print("\nLast 30 lines of log:")
+            print("\nLast 40 lines of log:")
             print("=" * 60)
-            print('\n'.join(log_content.split('\n')[-30:]))
+            print('\n'.join(log_content.split('\n')[-40:]))
+            
+            print("\n💡 If you see 'Not authenticated', you need localStorage tokens.")
+            print("   Run the localStorage check in your browser console (see instructions).")
             
             return None
     
@@ -395,7 +398,7 @@ def run_scraper():
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("  MURAENA.AI SCRAPER - Cookie-Based Authentication")
+    print("  MURAENA.AI SCRAPER - With Your Actual Cookies")
     print("=" * 60)
     
     results = run_scraper()
@@ -405,4 +408,8 @@ if __name__ == "__main__":
         total_records = sum(len(item.get('results', [])) for item in results)
         print(f"📊 Total results: {total_records}")
     else:
-        print("\n❌ Scraping failed. Check the logs above.")
+        print("\n❌ Scraping failed.")
+        print("\n🔍 Next steps:")
+        print("1. Check the error log above")
+        print("2. If you see 'Not authenticated', check localStorage in browser")
+        print("3. Look at screenshots in Apify console")

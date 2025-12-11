@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Muraena.ai Storage Extractor</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+        h1 { color: #4ec9b0; }
+        h2 { color: #569cd6; margin-top: 30px; }
+        pre {
+            background: #2d2d2d;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border: 1px solid #444;
+        }
+        .instruction {
+            background: #264f78;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #569cd6;
+        }
+        .warning {
+            background: #5a3c1e;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #ce9178;
+        }
+        button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        button:hover { background: #1177bb; }
+        .success { color: #4ec9b0; }
+        .error { color: #f48771; }
+        .key { color: #9cdcfe; }
+        .value { color: #ce9178; }
+    </style>
+</head>
+<body>
+    <h1>🔑 Muraena.ai Storage Extractor</h1>
+    
+    <div class="instruction">
+        <strong>📋 Instructions:</strong><br><br>
+        1. Make sure you're logged into <strong>https://app.muraena.ai</strong> in THIS browser tab<br>
+        2. Click the buttons below to extract storage data<br>
+        3. Copy the output and send it to your developer<br>
+        4. DO NOT share this data publicly (it contains your auth tokens!)
+    </div>
+
+    <h2>Step 1: Check localStorage</h2>
+    <button onclick="extractLocalStorage()">🔍 Extract localStorage</button>
+    <button onclick="copyToClipboard('localStorage')">📋 Copy localStorage</button>
+    <pre id="localStorage-output">Click "Extract localStorage" button...</pre>
+
+    <h2>Step 2: Check sessionStorage</h2>
+    <button onclick="extractSessionStorage()">🔍 Extract sessionStorage</button>
+    <button onclick="copyToClipboard('sessionStorage')">📋 Copy sessionStorage</button>
+    <pre id="sessionStorage-output">Click "Extract sessionStorage" button...</pre>
+
+    <h2>Step 3: Check for Auth Tokens</h2>
+    <button onclick="findAuthTokens()">🔑 Find Auth Tokens</button>
+    <pre id="auth-tokens-output">Click "Find Auth Tokens" button...</pre>
+
+    <div class="warning">
+        <strong>⚠️ Security Warning:</strong><br>
+        The data extracted here contains your authentication tokens. These are like passwords!<br>
+        - DO NOT share them publicly<br>
+        - DO NOT post them on forums or social media<br>
+        - Only share with trusted developers via secure channels
+    </div>
+
+    <script>
+        let localStorageData = {};
+        let sessionStorageData = {};
+
+        function extractLocalStorage() {
+            const output = document.getElementById('localStorage-output');
+            localStorageData = {};
+            
+            try {
+                if (localStorage.length === 0) {
+                    output.innerHTML = '<span class="error">❌ localStorage is empty</span>';
+                    return;
+                }
+
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    const value = localStorage.getItem(key);
+                    localStorageData[key] = value;
+                }
+
+                output.innerHTML = '<span class="success">✅ Found ' + Object.keys(localStorageData).length + ' items in localStorage:</span>\n\n' + 
+                    JSON.stringify(localStorageData, null, 2);
+                
+                console.log('localStorage:', localStorageData);
+            } catch (error) {
+                output.innerHTML = '<span class="error">❌ Error: ' + error.message + '</span>';
+            }
+        }
+
+        function extractSessionStorage() {
+            const output = document.getElementById('sessionStorage-output');
+            sessionStorageData = {};
+            
+            try {
+                if (sessionStorage.length === 0) {
+                    output.innerHTML = '<span class="error">❌ sessionStorage is empty</span>';
+                    return;
+                }
+
+                for (let i = 0; i < sessionStorage.length; i++) {
+                    const key = sessionStorage.key(i);
+                    const value = sessionStorage.getItem(key);
+                    sessionStorageData[key] = value;
+                }
+
+                output.innerHTML = '<span class="success">✅ Found ' + Object.keys(sessionStorageData).length + ' items in sessionStorage:</span>\n\n' + 
+                    JSON.stringify(sessionStorageData, null, 2);
+                
+                console.log('sessionStorage:', sessionStorageData);
+            } catch (error) {
+                output.innerHTML = '<span class="error">❌ Error: ' + error.message + '</span>';
+            }
+        }
+
+        function findAuthTokens() {
+            const output = document.getElementById('auth-tokens-output');
+            const authKeywords = ['token', 'auth', 'session', 'jwt', 'bearer', 'access', 'refresh', 'user', 'login'];
+            const foundTokens = {};
+
+            // Extract localStorage first if not already done
+            if (Object.keys(localStorageData).length === 0) {
+                extractLocalStorage();
+            }
+            
+            // Extract sessionStorage first if not already done
+            if (Object.keys(sessionStorageData).length === 0) {
+                extractSessionStorage();
+            }
+
+            // Search in localStorage
+            for (const [key, value] of Object.entries(localStorageData)) {
+                const keyLower = key.toLowerCase();
+                if (authKeywords.some(keyword => keyLower.includes(keyword))) {
+                    foundTokens['localStorage.' + key] = value;
+                }
+            }
+
+            // Search in sessionStorage
+            for (const [key, value] of Object.entries(sessionStorageData)) {
+                const keyLower = key.toLowerCase();
+                if (authKeywords.some(keyword => keyLower.includes(keyword))) {
+                    foundTokens['sessionStorage.' + key] = value;
+                }
+            }
+
+            if (Object.keys(foundTokens).length === 0) {
+                output.innerHTML = '<span class="error">❌ No authentication tokens found</span>\n\n' +
+                    'This could mean:\n' +
+                    '1. Muraena.ai uses HttpOnly cookies (check cookies in DevTools)\n' +
+                    '2. You\'re not logged in\n' +
+                    '3. The auth data has a different name';
+            } else {
+                output.innerHTML = '<span class="success">✅ Found ' + Object.keys(foundTokens).length + ' potential auth tokens:</span>\n\n' + 
+                    JSON.stringify(foundTokens, null, 2);
+                
+                console.log('Auth tokens:', foundTokens);
+            }
+        }
+
+        function copyToClipboard(type) {
+            let data = type === 'localStorage' ? localStorageData : sessionStorageData;
+            const text = JSON.stringify(data, null, 2);
+            
+            navigator.clipboard.writeText(text).then(() => {
+                alert('✅ ' + type + ' copied to clipboard!');
+            }).catch(err => {
+                alert('❌ Failed to copy: ' + err);
+            });
+        }
+
+        // Auto-run on page load
+        window.addEventListener('load', () => {
+            console.log('🔍 Muraena.ai Storage Extractor loaded');
+            console.log('Click the buttons above to extract storage data');
+        });
+    </script>
+</body>
+</html>

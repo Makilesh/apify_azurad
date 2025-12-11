@@ -1,0 +1,26 @@
+[
+  {
+    "name": "_hjSessionUser_5015060",
+    "value": "eyJpZCI6IjJlMzFhZTA3LTRjYTQtNWI1ZS04MDUzLWYxMzVhMjlhNjRiMyIsImNyZWF0ZWQiOjE3NjU0NTgyNzY0NDIsImV4aXN0aW5nIjp0cnVlfQ==",
+    "domain": ".muraena.ai",
+    "path": "/",
+    "httpOnly": false,
+    "secure": true
+  },
+  {
+    "name": "_hjSession_5015060",
+    "value": "eyJpZCI6IjRiOWJjNjQ5LTA3ZmYtNDExZi1hODQ1LWI0ZDBlOWI2NDI1YSIsImMiOjE3NjU0NTgyNzY0NDMsInMiOjEsInIiOjEsInNiIjowLCJzciI6MCwic2UiOjAsImZzIjoxLCJzcCI6MH0=",
+    "domain": ".muraena.ai",
+    "path": "/",
+    "httpOnly": false,
+    "secure": true
+  },
+  {
+    "name": "intercom-session-c4ozkspm",
+    "value": "Qzc2YjVKZ3ZIdDJPbm1xUTBhcXlFeS9XN3ppU0JyS3F4cXNsNmJCVXZhMDJpRGxmVDNGLzhpWENPakx0Q1lVV0xVVHJGcnRqREdOTWNzQmFicFBUVzVnMEErMDJOQUN0aXltZGRtU1o5dFE9LS0wWDRuWDgyM0hidU5NNlk0NHdKYnFRPT0=--8ea8388ddca0102d7d9eee75bc19ffc85becf638",
+    "domain": ".muraena.ai",
+    "path": "/",
+    "httpOnly": false,
+    "secure": false
+  }
+]
