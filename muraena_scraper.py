@@ -2,18 +2,29 @@ import os
 import time
 import json
 from apify_client import ApifyClient
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Get credentials from environment variables
+APIFY_API_TOKEN = os.getenv('APIFY_API_TOKEN')
+MURAENA_EMAIL = os.getenv('MURAENA_EMAIL')
+MURAENA_PASSWORD = os.getenv('MURAENA_PASSWORD')
+TARGET_URL = os.getenv('TARGET_URL')
+
+# Validate required environment variables
+if not APIFY_API_TOKEN:
+    raise ValueError("❌ APIFY_API_TOKEN not found in .env file")
+if not MURAENA_EMAIL:
+    raise ValueError("❌ MURAENA_EMAIL not found in .env file")
+if not MURAENA_PASSWORD:
+    raise ValueError("❌ MURAENA_PASSWORD not found in .env file")
+if not TARGET_URL:
+    raise ValueError("❌ TARGET_URL not found in .env file")
 
 # Initialize the ApifyClient with your API token
-# Get your API token from: https://console.apify.com/account/integrations
-APIFY_API_TOKEN = 'YOUR_APIFY_API_TOKEN_HERE'
 client = ApifyClient(APIFY_API_TOKEN)
-
-# Muraena.ai credentials
-MURAENA_EMAIL = 'titoxo5160@asurad.com'
-MURAENA_PASSWORD = 'titoxo5160@asurad.com'
-
-# Target URL to scrape
-TARGET_URL = 'https://app.muraena.ai/companies_search/results?company_countries[]=United%20States&industries[]=Commercial%20Real%20Estate,Leasing%20Non-residential%20Real%20Estate,Real%20Estate%20Agents%20and%20Brokers,Real%20Estate,Real%20Estate%20Agents%20and%20Brokers&page=7&size=100'
 
 # Configuration for Playwright Scraper
 run_input = {
@@ -325,6 +336,7 @@ run_input = {
 def run_scraper():
     """Run the Muraena.ai scraper"""
     print("🚀 Starting Muraena.ai scraper...")
+    print(f"📍 Target URL: {TARGET_URL[:80]}...")
     
     try:
         # Run the Actor using Playwright Scraper
@@ -465,12 +477,6 @@ if __name__ == "__main__":
     print("=" * 60)
     print("  MURAENA.AI SCRAPER - Python + Apify API")
     print("=" * 60)
-    
-    # Check if API token is set
-    if APIFY_API_TOKEN == 'YOUR_APIFY_API_TOKEN_HERE':
-        print("\n❌ ERROR: Please set your APIFY_API_TOKEN")
-        print("Get your token from: https://console.apify.com/account/integrations")
-        exit(1)
     
     # Run the scraper
     results = run_scraper()
