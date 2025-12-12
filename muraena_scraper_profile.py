@@ -251,46 +251,52 @@ class MuraenaProfileScraper:
         await self.page.screenshot(path='screenshots/02_no_companies_error.png', full_page=True)
         return None
     
-    async def click_reveal_buttons(self):
-        """Click all 'Reveal' buttons to uncover hidden data"""
-        print("Looking for 'Reveal' buttons...")
-        
+    async def inspect_dom_for_hidden_data(self):
+        """Inspect the DOM to find hidden email/phone data without clicking buttons"""
+        print("Inspecting DOM for hidden contact data...")
+
         await self.page.screenshot(path='screenshots/03_before_reveal.png', full_page=True)
-        
-        # Try different button selectors
-        reveal_selectors = [
-            'button:has-text("Reveal")',
-            'button:has-text("Show")',
-            'button[class*="reveal"]',
-            'button[class*="show"]'
-        ]
-        
-        total_clicked = 0
-        
-        for selector in reveal_selectors:
-            try:
-                buttons = await self.page.locator(selector).all()
-                
-                if buttons:
-                    print(f"   Found {len(buttons)} buttons with selector: {selector}")
-                    
-                    for i, button in enumerate(buttons[:50]):
-                        try:
-                            await button.click(timeout=500)
-                            total_clicked += 1
-                            await self.page.wait_for_timeout(200)
-                        except:
-                            continue
-            except:
-                continue
-        
-        if total_clicked > 0:
-            print(f"   Clicked {total_clicked} reveal buttons")
-            await self.page.wait_for_timeout(2000)
-            await self.page.screenshot(path='screenshots/04_after_reveal.png', full_page=True)
-            print("   Screenshot saved: screenshots/04_after_reveal.png\n")
-        else:
-            print("   No reveal buttons found - data may already be visible\n")
+
+        # Inspect the page HTML to find where email/phone might be hidden
+        dom_info = await self.page.evaluate('''() => {
+            const rows = document.querySelectorAll('[class*="CompanyRow"]');
+            const sample = rows[0];
+
+            return {
+                rowCount: rows.length,
+                sampleHTML: sample ? sample.outerHTML.substring(0, 2000) : 'N/A',
+                allAttributes: sample ? Array.from(sample.attributes).map(a => a.name + '=' + a.value) : [],
+                dataAttributes: sample ? Object.keys(sample.dataset) : [],
+                hiddenElements: sample ? Array.from(sample.querySelectorAll('[style*="display: none"], [style*="visibility: hidden"], [hidden]')).length : 0,
+                allText: sample ? sample.innerText.substring(0, 500) : 'N/A'
+            };
+        }''')
+
+        print(f"   Rows found: {dom_info['rowCount']}")
+        print(f"   Hidden elements in first row: {dom_info['hiddenElements']}")
+        print(f"   Data attributes: {dom_info['dataAttributes']}")
+        print(f"\n   Sample HTML (first 500 chars):")
+        print(f"   {dom_info['sampleHTML'][:500]}...")
+        print()
+
+        # Try to find email/phone patterns in the raw HTML
+        html_content = await self.page.content()
+
+        # Look for email patterns in HTML
+        import re
+        emails_in_html = re.findall(r'[\w.-]+@[\w.-]+\.\w+', html_content[:50000])  # First 50k chars
+        phones_in_html = re.findall(r'(\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}', html_content[:50000])
+
+        print(f"   Emails found in HTML: {len(set(emails_in_html))} unique")
+        if emails_in_html[:3]:
+            print(f"   Sample emails: {emails_in_html[:3]}")
+
+        print(f"   Phones found in HTML: {len(set(phones_in_html))} unique")
+        if phones_in_html[:3]:
+            print(f"   Sample phones: {phones_in_html[:3]}")
+        print()
+
+        return dom_info
     
     async def extract_company_data(self, company_selector):
         """Extract data from company cards/list (not a table!)"""
@@ -315,12 +321,19 @@ class MuraenaProfileScraper:
                     // Skip empty rows
                     if (lines.length < 3) return;
 
-                    // Find company name link
-                    const nameLink = row.querySelector('a[href*="/company/"]');
-                    if (!nameLink) return; // Skip if no company link found
+                    // Find company name link (try multiple selectors)
+                    const nameLink = row.querySelector('a[href*="/company/"]') ||
+                                   row.querySelector('a[href*="company"]') ||
+                                   row.querySelector('a[href*="profile"]') ||
+                                   row.querySelector('a');  // Fallback to first link
+
+                    if (!nameLink) return; // Skip if no link found at all
 
                     const companyName = nameLink.textContent.trim();
                     const companyUrl = nameLink.href;
+
+                    // Skip if company name is empty
+                    if (!companyName) return;
 
                     // Skip duplicates based on company name
                     if (seenCompanies.has(companyName)) return;
@@ -381,8 +394,13 @@ class MuraenaProfileScraper:
                         }}
                     }}
 
-                    // Validate: must have at minimum company name and location
-                    if (!companyName || (!location && !industry)) return;
+                    // Validate: must have at minimum company name (already checked above)
+                    // Accept rows even if location/industry are missing
+
+                    // Email/phone data is NOT available in free page view
+                    // Muraena.ai requires credits to access this premium data
+                    const email = 'REQUIRES_CREDITS';
+                    const phone = 'REQUIRES_CREDITS';
 
                     companies.push({{
                         rowNumber: companies.length + 1,
@@ -391,8 +409,8 @@ class MuraenaProfileScraper:
                         industry: {{ text: industry }},
                         location: {{ text: location }},
                         headcount: {{ text: headcount }},
-                        email: {{ text: 'REVEAL_REQUIRED' }},
-                        phone: {{ text: 'REVEAL_REQUIRED' }},
+                        email: {{ text: email }},
+                        phone: {{ text: phone }},
                         role: {{ text: '' }},
                         allText: allText
                     }});
@@ -502,10 +520,10 @@ class MuraenaProfileScraper:
             if not company_selector:
                 await self.cleanup()
                 return False
-            
-            # Click reveal buttons
-            await self.click_reveal_buttons()
-            
+
+            # Inspect DOM for hidden data (instead of clicking buttons that navigate away)
+            await self.inspect_dom_for_hidden_data()
+
             # Extract data
             await self.extract_company_data(company_selector)
             
